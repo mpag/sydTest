@@ -58,7 +58,8 @@ function init()
 	
 	////////// EVENTS //////////
 	// automatically resize renderer
-	THREEx.WindowResize(renderer, camera);
+	// THREEx.WindowResize(renderer, camera);
+	window.addEventListener( 'resize', onWindowResize, false );
 	
 	///////// CONTROLS /////////
 	controls = new THREE.OrbitControls( camera, renderer.domElement );
