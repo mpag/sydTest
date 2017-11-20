@@ -17,7 +17,11 @@ init();
 // animation loop
 animate();
 
-// FUNCTIONS
+
+
+///////////////
+// FUNCTIONS //
+///////////////
 			
 function init() 
 {
@@ -29,8 +33,12 @@ function init()
 	// camera attributes
 	var VIEW_ANGLE = 45, ASPECT = SCREEN_WIDTH / SCREEN_HEIGHT, NEAR = 0.1, FAR = 100000;
 	camera = new THREE.PerspectiveCamera( VIEW_ANGLE, ASPECT, NEAR, FAR);
+
+	// new THREE.OrthographicCamera( SCREEN_WIDTH / - 2, SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, SCREEN_HEIGHT / - 2, 0.1, 100000 )
+
+
 	scene.add(camera);
-	camera.position.set(-900,250,600);
+	camera.position.set(24,30,-107);
 	camera.lookAt(camera.position);
 	
 	///////// RENDERER /////////
@@ -42,9 +50,7 @@ function init()
 	renderer.shadowMapEnabled = true;
 	// renderer.shadowMapType = THREE.PCFSoftShadowMap;
 	renderer.setSize(SCREEN_WIDTH, SCREEN_HEIGHT);
-	// attach div element to variable to contain the renderer
 	container = document.getElementById( 'ThreeJS' );
-	// attach renderer to the container div
 	container.appendChild( renderer.domElement );
 	
 	////////// EVENTS //////////
@@ -53,30 +59,17 @@ function init()
 	
 	///////// CONTROLS /////////
 	controls = new THREE.OrbitControls( camera, renderer.domElement );
-	controls.enableDamping = true;
-	controls.dampingFactor = 0.40;
-	
-	///////// STATS/////////
-	// displays current and past frames per second attained by scene
-	// stats = new Stats();
-	// stats.domElement.style.position = 'absolute';
-	// stats.domElement.style.bottom = '0px';
-	// stats.domElement.style.zIndex = 100;
-	// container.appendChild( stats.domElement );
-	
+
 	////////// LIGHT /////////
 
 	var light = new THREE.SpotLight(0xffffff);
-	light.position.set(0,300,0);
+	light.position.set(0,50,0);
 	light.castShadow = true;
 	scene.add(light);
-	var ambientLight = new THREE.AmbientLight(0x111111);
+	var ambientLight = new THREE.AmbientLight(0x111111,1.5);
 	scene.add(ambientLight);
 
 	//////// GEOMETRY /////////
-
-	//Base Geom
-	var boxGeometry = new THREE.BoxGeometry( 50, 50, 50);
 
 	var onProgress = function ( xhr ) {
 		if ( xhr.lengthComputable ) {
@@ -84,6 +77,7 @@ function init()
 			console.log( Math.round(percentComplete, 2) + '% downloaded' );
 		}
 	};
+
 	var onError = function ( xhr ) {
 	};
 
@@ -94,12 +88,15 @@ function init()
 
 	var loader = new THREE.OBJLoader( manager );
 	loader.load( 'meshRoof.obj', function ( object ) {
-		object.position.y = -50;
-		object.scale.set(10,10,10);
+		object.position.x = 10;
+		object.position.z = 35;
+		object.id = "roof";
 		object.receiveShadow = true;
 		object.castShadow = true;
 		scene.add( object );
+		console.log("go");
 	}, onProgress, onError );
+
 
 	//Materials
 	var imgTexture = new THREE.ImageUtils.loadTexture( "UV.jpg" );
@@ -115,26 +112,6 @@ function init()
 	terrain.receiveShadow = true;
 	terrain.castShadow = true;
 
-	var numpoints = 2000;
-	var dots = [];
-	cubes = [];
-
-	for (var i = 0 ; i < numpoints ; i++) {
-	    var x = Math.random() * (10000) - 5000 //Math.random() * (max - min) + min
-	    var y = Math.random() * 200 + 50
-	    var z = Math.random() * (10000) - 5000
-	    var dotGeometry = new THREE.Geometry();
-	    dots.push(dotGeometry);
-	    dotGeometry.vertices.push(new THREE.Vector3(x, y, z)); 
-	    cube2 = new THREE.Mesh( boxGeometry, material);
-	    cube2.position.x = x;
-	    cube2.position.y = y;
-	    cube2.position.z = z;
-	    cube2.castShadow = true;
-	    cube2.receiveShadow = true;
-	    cubes.push(cube2);
-	    // scene.add(cube2);
-	};
 
 	//Addition to Scene
 	scene.add(terrain);	
@@ -146,7 +123,7 @@ function init()
 	// var skyBoxMaterial = new THREE.MeshStandardMaterial( { diffuse: 0xFFFFFF, side: THREE.DoubleSide});
 	// skyBox = new THREE.Mesh( skyBoxGeometry, skyBoxMaterial );
 	// scene.add(skyBox);
-	scene.fog = new THREE.FogExp2( 0x000000, 0.0005 );
+	scene.fog = new THREE.FogExp2( 0x000000, 0.0085 );
 }
 
 
