@@ -19,6 +19,7 @@ animate();
 
 
 
+
 ///////////////
 // FUNCTIONS //
 ///////////////
@@ -31,16 +32,18 @@ function init()
 	//////// CAMERA //////////
 	var SCREEN_WIDTH = window.innerWidth, SCREEN_HEIGHT = window.innerHeight;
 	// camera attributes
-	var VIEW_ANGLE = 45, ASPECT = SCREEN_WIDTH / SCREEN_HEIGHT, NEAR = 0.1, FAR = 100000;
-	camera = new THREE.PerspectiveCamera( VIEW_ANGLE, ASPECT, NEAR, FAR);
+	var VIEW_ANGLE = 45, ASPECT = SCREEN_WIDTH / SCREEN_HEIGHT, NEAR = -100000, FAR = 100000;
+	// camera = new THREE.PerspectiveCamera( VIEW_ANGLE, ASPECT, NEAR, FAR);
+	frustumSize = 1000;
 
-	// new THREE.OrthographicCamera( SCREEN_WIDTH / - 2, SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, SCREEN_HEIGHT / - 2, 0.1, 100000 )
+	var aspect = window.innerWidth / window.innerHeight;
 
-
+	camera = new THREE.OrthographicCamera( frustumSize * aspect / - 2, frustumSize * aspect / 2, frustumSize / 2, frustumSize / - 2, NEAR, FAR );
+	camera.zoom = 7;
+	camera.position.set(-10,3.5,-10);
+	camera.updateProjectionMatrix();
 	scene.add(camera);
-	camera.position.set(24,30,-107);
-	camera.lookAt(camera.position);
-	
+
 	///////// RENDERER /////////
 	if ( Detector.webgl )
 		renderer = new THREE.WebGLRenderer( {antialias:true} );
@@ -59,18 +62,22 @@ function init()
 	
 	///////// CONTROLS /////////
 	controls = new THREE.OrbitControls( camera, renderer.domElement );
+	controls.center.set(0, 40, 0);
+	camera.position.copy(controls.center).add(new THREE.Vector3(10, 5, 10));
 
 	////////// LIGHT /////////
-
-	var light = new THREE.SpotLight(0xffffff);
-	light.position.set(0,50,0);
+	var light = new THREE.SpotLight(0xffffff, 0.7);
+	light.position.set(0,1000,0);
 	light.castShadow = true;
 	scene.add(light);
+
 	var ambientLight = new THREE.AmbientLight(0x111111,1.5);
 	scene.add(ambientLight);
 
+	
 	//////// GEOMETRY /////////
 
+	//CHECKS//
 	var onProgress = function ( xhr ) {
 		if ( xhr.lengthComputable ) {
 			var percentComplete = xhr.loaded / xhr.total * 100;
@@ -86,15 +93,37 @@ function init()
 		console.log( item, loaded, total );
 	};
 
+
+	//LOADER//
+	var axo = ["meshRoof.obj", "meshRoof1.obj", "meshRoof2.obj"]
+
 	var loader = new THREE.OBJLoader( manager );
-	loader.load( 'meshRoof.obj', function ( object ) {
-		object.position.x = 10;
-		object.position.z = 35;
-		object.id = "roof";
+	
+	loader.load(axo[0], function ( object ) {	
+		object.id = "layer1";
+		object.position.y = 20;
+		object.position.z = 45;
 		object.receiveShadow = true;
 		object.castShadow = true;
 		scene.add( object );
-		console.log("go");
+	}, onProgress, onError );
+
+	loader.load(axo[1], function ( object ) {	
+		object.id = "layer2";
+		object.position.y = 40;
+		object.position.z = 45;
+		object.receiveShadow = true;
+		object.castShadow = true;
+		scene.add( object );
+	}, onProgress, onError );
+
+	loader.load(axo[2], function ( object ) {	
+		object.id = "layer3";
+		object.position.y = 60;
+		object.position.z = 45;
+		object.receiveShadow = true;
+		object.castShadow = true;
+		scene.add( object );
 	}, onProgress, onError );
 
 
@@ -103,15 +132,17 @@ function init()
 	imgTexture.wrapS = imgTexture.wrapT = THREE.RepeatWrapping;
 	var imgBumpTexture = new THREE.ImageUtils.loadTexture( "UV.jpg" );
 	imgBumpTexture.wrapS = imgBumpTexture.wrapT = THREE.RepeatWrapping;
-	var material = new THREE.MeshPhongMaterial( { diffuse: 0xFFFFFF, bumpMap: imgBumpTexture, bumpScale: 0.01, side: THREE.DoubleSide});
+	var material = new THREE.MeshPhongMaterial( { diffuse: imgTexture, bumpMap: imgBumpTexture, bumpScale: 0.01, side: THREE.FrontSide});
 
 	//Geom Definition
-	var geometryTerrain = new THREE.PlaneGeometry( 2800, 2800, 256, 256 );
+	var geometryTerrain = new THREE.PlaneGeometry( 28000, 28000, 256, 256 );
 	terrain = new THREE.Mesh( geometryTerrain, material );
 	terrain.rotation.x = Math.PI / -2;
 	terrain.receiveShadow = true;
 	terrain.castShadow = true;
 
+	var gridHelper = new THREE.GridHelper( 700, 200 );
+	scene.add( gridHelper );
 
 	//Addition to Scene
 	scene.add(terrain);	
@@ -119,11 +150,11 @@ function init()
 
 	//////// SKY /////////////
 
-	// var skyBoxGeometry = new THREE.CubeGeometry( 20000, 20000, 20000 );
-	// var skyBoxMaterial = new THREE.MeshStandardMaterial( { diffuse: 0xFFFFFF, side: THREE.DoubleSide});
-	// skyBox = new THREE.Mesh( skyBoxGeometry, skyBoxMaterial );
-	// scene.add(skyBox);
-	scene.fog = new THREE.FogExp2( 0x000000, 0.0085 );
+	var skyBoxGeometry = new THREE.CubeGeometry( 20000, 20000, 20000 );
+	var skyBoxMaterial = new THREE.MeshStandardMaterial( { diffuse: 0xFFFFFF, side: THREE.BackSide});
+	skyBox = new THREE.Mesh( skyBoxGeometry, skyBoxMaterial );
+	scene.add(skyBox);
+	scene.fog = new THREE.FogExp2( 0xFFFFFF, 0.0065 );
 }
 
 
@@ -132,6 +163,18 @@ function animate()
     requestAnimationFrame( animate );	
 	render();		
 	update();
+}
+
+
+
+function onWindowResize() {
+	var aspect = window.innerWidth / window.innerHeight;
+	camera.left   = - frustumSize * aspect / 2;
+	camera.right  =   frustumSize * aspect / 2;
+	camera.top    =   frustumSize / 2;
+	camera.bottom = - frustumSize / 2;
+	camera.updateProjectionMatrix();
+	renderer.setSize( window.innerWidth, window.innerHeight );
 }
 
 
